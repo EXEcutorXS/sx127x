@@ -3,16 +3,16 @@
  * www: www.Domski.pl
  *
  * work based on DORJI.COM sample code and
- * https://github.com/realspinner/SX1276_LoRa
+ * https://github.com/realspinner/SX127X_LoRa
  */
 
-#ifndef __SX1276_H__
-#define __SX1276_H__
+#ifndef __SX127X_H__
+#define __SX127X_H__
 
 #include <stdint.h>
 #include <stdbool.h>
 #include "main.h"
-#define SX1276_MAX_PACKET	32
+#define SX127X_MAX_PACKET	32
 
 
 /********************LoRa mode***************************/
@@ -89,53 +89,53 @@
 /**********************************************************
  **Parameter table define
  **********************************************************/
-#define SX1276_FREQ_410MHZ 0x668011
-#define SX1276_FREQ_433MHZ 0x6C4012
-#define SX1276_FREQ_868MHZ 0xd90024
-#define SX1276_FREQ_DEFAULT 0xD93CF0 //868950 MHz
-#define SX1276_FREQ_820MHZ 0xCD0022
-#define SX1276_FREQ_1020MHZ 0xFF002A
-#define SX1276_FREQ_525MHZ 0x834016
-#define SX1276_FREQ_1MHZ   0x4000
+#define SX127X_FREQ_410MHZ 0x668011
+#define SX127X_FREQ_433MHZ 0x6C4012
+#define SX127X_FREQ_868MHZ 0xd90024
+#define SX127X_FREQ_DEFAULT 0xD93CF0 //868950 MHz
+#define SX127X_FREQ_820MHZ 0xCD0022
+#define SX127X_FREQ_1020MHZ 0xFF002A
+#define SX127X_FREQ_525MHZ 0x834016
+#define SX127X_FREQ_1MHZ   0x4000
 
-#define SX1276_POWER_20DBM		20
-#define SX1276_POWER_17DBM		17
-#define SX1276_POWER_14DBM		14
-#define SX1276_POWER_11DBM		11
-#define SX1276_POWER_10DBM		10
+#define SX127X_POWER_20DBM		20
+#define SX127X_POWER_17DBM		17
+#define SX127X_POWER_14DBM		14
+#define SX127X_POWER_11DBM		11
+#define SX127X_POWER_10DBM		10
 
-#define SX1276_LORA_SF_6		6
-#define SX1276_LORA_SF_7		7
-#define SX1276_LORA_SF_8		8
-#define SX1276_LORA_SF_9		9
-#define SX1276_LORA_SF_10		10
-#define SX1276_LORA_SF_11	    11
-#define SX1276_LORA_SF_12		12
+#define SX127X_LORA_SF_6		6
+#define SX127X_LORA_SF_7		7
+#define SX127X_LORA_SF_8		8
+#define SX127X_LORA_SF_9		9
+#define SX127X_LORA_SF_10		10
+#define SX127X_LORA_SF_11	    11
+#define SX127X_LORA_SF_12		12
 
-#define	SX1276_LORA_BW_7_8KHZ		0
-#define	SX1276_LORA_BW_10_4KHZ		1
-#define	SX1276_LORA_BW_15_6KHZ		2
-#define	SX1276_LORA_BW_20_8KHZ		3
-#define	SX1276_LORA_BW_31_2KHZ		4
-#define	SX1276_LORA_BW_41_7KHZ		5
-#define	SX1276_LORA_BW_62_5KHZ		6
-#define	SX1276_LORA_BW_125KHZ		7
-#define	SX1276_LORA_BW_250KHZ		8
-#define	SX1276_LORA_BW_500KHZ		9
+#define	SX127X_LORA_BW_7_8KHZ		0
+#define	SX127X_LORA_BW_10_4KHZ		1
+#define	SX127X_LORA_BW_15_6KHZ		2
+#define	SX127X_LORA_BW_20_8KHZ		3
+#define	SX127X_LORA_BW_31_2KHZ		4
+#define	SX127X_LORA_BW_41_7KHZ		5
+#define	SX127X_LORA_BW_62_5KHZ		6
+#define	SX127X_LORA_BW_125KHZ		7
+#define	SX127X_LORA_BW_250KHZ		8
+#define	SX127X_LORA_BW_500KHZ		9
 
-#define SX1276_CR_4_5               1
-#define SX1276_CR_4_6               2
-#define SX1276_CR_4_7               3
-#define SX1276_CR_4_8               4
+#define SX127X_CR_4_5               1
+#define SX127X_CR_4_6               2
+#define SX127X_CR_4_7               3
+#define SX127X_CR_4_8               4
 
-typedef enum SX1276_STATUS {
+typedef enum SX127X_STATUS {
 	UNINITIALISED, SLEEP, STANDBY, TX, RX,
-} SX1276_Status_t;
+} SX127X_Status_t;
 
 typedef struct {
 	int pin;
 	void * port;
-} SX1276_dio_t;
+} SX127X_dio_t;
 
 typedef struct {
 	//settings part
@@ -152,7 +152,7 @@ typedef struct {
 
     bool alwaysRX;    //По окончанию передачи модуль не засыпает и начинает приём
 
-	SX1276_Status_t status;
+	SX127X_Status_t status;
 	bool TXrequest:1;  //Запрос отправки сообщения
 	uint32_t lastRX; //Последний приём сообщения
 	uint32_t lastTransTick; //Время последней передачи
@@ -166,62 +166,63 @@ typedef struct {
 
 	//Hardware part
 
-	SX1276_dio_t reset;
-	SX1276_dio_t nss;
+	SX127X_dio_t reset;
+	SX127X_dio_t nss;
 	SPI_HandleTypeDef* spi;
 	uint8_t revision;
-} SX1276_t;
+} SX127X_t;
 
 
 
 //hardware
 
-__weak void SX1276_SetNSS(SX1276_t * module, GPIO_PinState state);
-__weak void SX1276_Reset(SX1276_t * module);
-__weak void SX1276_SPICommand(SX1276_t * module, uint8_t cmd);
-__weak uint8_t SX1276_SPIReadByte(SX1276_t * module);
-__weak int SX1276_GetDIO0(SX1276_t * module);
+__weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state);
+__weak void SX127X_Reset(SX127X_t * module);
+__weak void SX127X_SPICommand(SX127X_t * module, uint8_t cmd);
+__weak uint8_t SX127X_SPIReadByte(SX127X_t * module);
+__weak int SX127X_GetDIO0(SX127X_t * module);
 
 //logic
 
-uint8_t SX1276_SPIRead(SX1276_t * module, uint8_t addr);
-void SX1276_SPIWrite(SX1276_t * module, uint8_t addr, uint8_t cmd);
-void SX1276_SPIBurstRead(SX1276_t * module, uint8_t addr, uint8_t *rxBuf,
+uint8_t SX127X_SPIRead(SX127X_t * module, uint8_t addr);
+void SX127X_SPIWrite(SX127X_t * module, uint8_t addr, uint8_t cmd);
+void SX127X_SPIBurstRead(SX127X_t * module, uint8_t addr, uint8_t *rxBuf,
 		uint8_t length);
-void SX1276_SPIBurstWrite(SX1276_t * module, uint8_t addr, uint8_t *txBuf,
+void SX127X_SPIBurstWrite(SX127X_t * module, uint8_t addr, uint8_t *txBuf,
 		uint8_t length);
 
-void SX1276_config(SX1276_t * module);
+void SX127X_config(SX127X_t * module);
 
-void SX1276_clearIrq(SX1276_t * module);
-int SX1276_startRx(SX1276_t * module, uint32_t timeout);
-uint8_t SX1276_receive(SX1276_t * module);
-int SX1276_startTx(SX1276_t * module, uint8_t length, uint32_t timeout);
-int SX1276_transmit(SX1276_t * module, uint8_t *txBuf, uint8_t length,
+void SX127X_clearIrq(SX127X_t * module);
+int SX127X_startRx(SX127X_t * module, uint32_t timeout);
+uint8_t SX127X_receive(SX127X_t * module);
+int SX127X_startTx(SX127X_t * module, uint8_t length, uint32_t timeout);
+int SX127X_transmit(SX127X_t * module, uint8_t *txBuf, uint8_t length,
 		uint32_t timeout);
 
-int16_t SX1276_RSSI(SX1276_t * module);
-int16_t SX1276_RSSI_Pack(SX1276_t * module);
-uint8_t SX1276_SNR(SX1276_t * module);
+int16_t SX127X_RSSI(SX127X_t * module);
+int16_t SX127X_RSSI_Pack(SX127X_t * module);
+uint8_t SX127X_SNR(SX127X_t * module);
 
-void SX1276_standby(SX1276_t * module);
-void SX1276_sleep(SX1276_t * module);
-int8_t SX1276_readTemp(SX1276_t * module);
+void SX127X_standby(SX127X_t * module);
+void SX127X_sleep(SX127X_t * module);
+int8_t SX127X_readTemp(SX127X_t * module);
 
 //Функции для работы с модулем без задержек
-//В основном цикле должна выхываться функция SX1276_activity
+//В основном цикле должна выхываться функция SX127X_Routine
 //Для передачи массива необходимо записать его module->txBuf, длину в module->len
-//И вызвать SX1276_requestTransmission
+//И вызвать SX127X_requestTransmission
 //Отслеживать приходящие сообщения можно по переменной module->readBytes, если она не равна нулю
 //Значит в массив по адреу module->rxBuf был записан массив длиной readBytes.
-void SX1276_activity(SX1276_t* module);
-void SX1276_transmit_it(SX1276_t* module);
-void SX1276_readStatus(SX1276_t * module);
-void SX1276_readIrq(SX1276_t * module);
-void SX1276_delayMicro(uint32_t micros);
-void SX1276_defaultConfig(SX1276_t * module);
-HAL_StatusTypeDef SX1276_requestTransmission(SX1276_t* module,	uint8_t lenght);
-uint8_t SX1276_getRandom(SX1276_t* module);
-void SX1276_init(SX1276_t* module);
+void SX127X_Routine(SX127X_t* module);
+void SX127X_transmit_it(SX127X_t* module);
+void SX127X_readStatus(SX127X_t * module);
+void SX127X_readIrq(SX127X_t * module);
+void SX127X_delayMicro(uint32_t micros);
+void SX127X_defaultConfig(SX127X_t * module);
+void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss);
+HAL_StatusTypeDef SX127X_requestTransmission(SX127X_t* module,	uint8_t lenght);
+uint8_t SX127X_getRandom(SX127X_t* module);
+void SX127X_init(SX127X_t* module);
 #endif
 
