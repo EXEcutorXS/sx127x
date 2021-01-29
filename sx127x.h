@@ -153,7 +153,7 @@ typedef struct {
     bool alwaysRX;    //По окончанию передачи модуль не засыпает и начинает приём
 
 	SX127X_Status_t status;
-	bool TXrequest:1;  //Запрос отправки сообщения
+	bool TXrequest;  //Запрос отправки сообщения
 	uint32_t lastRX; //Последний приём сообщения
 	uint32_t lastTransTick; //Время последней передачи
     bool signalDetected;
@@ -169,12 +169,9 @@ typedef struct {
 	SX127X_dio_t reset;
 	SX127X_dio_t nss;
 	SPI_HandleTypeDef* spi;
+
 	uint8_t revision;
 } SX127X_t;
-
-
-
-//hardware
 
 __weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state);
 __weak void SX127X_Reset(SX127X_t * module);
@@ -182,47 +179,42 @@ __weak void SX127X_SPICommand(SX127X_t * module, uint8_t cmd);
 __weak uint8_t SX127X_SPIReadByte(SX127X_t * module);
 __weak int SX127X_GetDIO0(SX127X_t * module);
 
-//logic
-
 uint8_t SX127X_SPIRead(SX127X_t * module, uint8_t addr);
 void SX127X_SPIWrite(SX127X_t * module, uint8_t addr, uint8_t cmd);
 void SX127X_SPIBurstRead(SX127X_t * module, uint8_t addr, uint8_t *rxBuf,
 		uint8_t length);
 void SX127X_SPIBurstWrite(SX127X_t * module, uint8_t addr, uint8_t *txBuf,
 		uint8_t length);
+void SX127X_standby(SX127X_t * module);
+void SX127X_sleep(SX127X_t * module);
 
-void SX127X_config(SX127X_t * module);
 
 void SX127X_clearIrq(SX127X_t * module);
 int SX127X_startRx(SX127X_t * module, uint32_t timeout);
 uint8_t SX127X_receive(SX127X_t * module);
-int SX127X_startTx(SX127X_t * module, uint8_t length, uint32_t timeout);
-int SX127X_transmit(SX127X_t * module, uint8_t *txBuf, uint8_t length,
-		uint32_t timeout);
+void SX127X_readStatus(SX127X_t * module);
+void SX127X_readIrq(SX127X_t * module);
+void SX127X_delayMicro(uint32_t micros);
+void SX127X_defaultConfig(SX127X_t * module);
 
+void SX127X_config(SX127X_t * module);
 int16_t SX127X_RSSI(SX127X_t * module);
 int16_t SX127X_RSSI_Pack(SX127X_t * module);
 uint8_t SX127X_SNR(SX127X_t * module);
-
-void SX127X_standby(SX127X_t * module);
-void SX127X_sleep(SX127X_t * module);
 int8_t SX127X_readTemp(SX127X_t * module);
-
+void SX127X_readAllRegisters(SX127X_t* module,uint8_t* buf);
+void SX127X_Routine(SX127X_t* module);
+void SX127X_transmit_it(SX127X_t* module);
+void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss, SPI_HandleTypeDef* hspi);
+HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t* module, uint8_t lenght);
+uint8_t SX127X_getRandom(SX127X_t* module);
+void SX127X_init(SX127X_t* module);
 //Функции для работы с модулем без задержек
 //В основном цикле должна выхываться функция SX127X_Routine
 //Для передачи массива необходимо записать его module->txBuf, длину в module->len
 //И вызвать SX127X_requestTransmission
 //Отслеживать приходящие сообщения можно по переменной module->readBytes, если она не равна нулю
 //Значит в массив по адреу module->rxBuf был записан массив длиной readBytes.
-void SX127X_Routine(SX127X_t* module);
-void SX127X_transmit_it(SX127X_t* module);
-void SX127X_readStatus(SX127X_t * module);
-void SX127X_readIrq(SX127X_t * module);
-void SX127X_delayMicro(uint32_t micros);
-void SX127X_defaultConfig(SX127X_t * module);
-void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss);
-HAL_StatusTypeDef SX127X_requestTransmission(SX127X_t* module,	uint8_t lenght);
-uint8_t SX127X_getRandom(SX127X_t* module);
-void SX127X_init(SX127X_t* module);
+
 #endif
 

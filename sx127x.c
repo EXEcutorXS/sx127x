@@ -1,39 +1,30 @@
 /**
-*Author Milke Andrey a.k.a EXEcutorXS <streamline88@inbox.ru>
-* based on code Wojciech Domski <Wojciech.Domski@gmail.com>
+*Author Milke Andrey  <streamline88@inbox.ru>
+* based on code of Wojciech Domski <Wojciech.Domski@gmail.com>
 */
 #include "main.h"
 
-extern UART_HandleTypeDef huart1;
-extern SPI_HandleTypeDef hspi1;
-extern nodeSettings_t settings;
-uint32_t systick;
 
-//////////////////////////////////
-// logic
-//////////////////////////////////
-
-
+#ifndef USE_LL
 __weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state) {
 	HAL_GPIO_WritePin(module->nss.port, module->nss.pin, state);
 }
 
-__weak void SX127X_Reset(SX127X_t * module) {
-	SX127X_SetNSS(module, 1);
-	HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_RESET);
+	__weak void SX127X_Reset(SX127X_t * module) {
+		SX127X_SetNSS(module, 1);
+		HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_RESET);
 
-	HAL_Delay(1);
+		SX127X_delayMicro(1000);
 
-	HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_SET);
 
-	HAL_Delay(6);
-}
+		SX127X_delayMicro(6000);
+	}
 
 __weak void SX127X_SPICommand(SX127X_t * module, uint8_t cmd) {
 	SX127X_SetNSS(module, 0);
 	HAL_SPI_Transmit(module->spi, &cmd, 1, 1000);
-	while (HAL_SPI_GetState(module->spi) != HAL_SPI_STATE_READY)
-	;
+	while (HAL_SPI_GetState(module->spi) != HAL_SPI_STATE_READY);
 }
 
 __weak uint8_t SX127X_SPIReadByte(SX127X_t * module) {
@@ -42,11 +33,36 @@ __weak uint8_t SX127X_SPIReadByte(SX127X_t * module) {
 
 	SX127X_SetNSS(module, 0);
 	HAL_SPI_TransmitReceive(module->spi, &txByte, &rxByte, 1, 1000);
-	while (HAL_SPI_GetState(module->spi) != HAL_SPI_STATE_READY)
-
-	;
 	return rxByte;
 }
+#else
+__weak void SX127X_SPICommand(SX127X_t * module, uint8_t cmd) {
+	SX127X_SetNSS(module, 0);
+	while(!LL_SPI_IsActiveFlag_TXE(module->spi));
+	LL_SPI_TransmitData8(module->spi, cmd);
+	;
+}
+
+__weak uint8_t SX127X_SPIReadByte(SX127X_t * module) {
+
+	SX127X_SetNSS(module, 0);
+	while(!LL_SPI_IsActiveFlag_RXNE(module->spi)) {}
+	return LL_SPI_ReceiveData16(module->spi);
+
+}
+__weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state) {
+	state?LL_GPIO_ResetOutputPin(module->nss.port, module->nss.pin):LL_GPIO_SetOutputPin(module->nss.port, module->nss.pin);
+}
+
+__weak void SX127X_Reset(SX127X_t * module) {
+	SX127X_SetNSS(module, 1);
+    LL_GPIO_ResetOutputPin(module->reset.port, module->reset.pin);
+    SX127X_delayMicro(1000);
+	LL_GPIO_SetOutputPin(module->reset.port, module->reset.pin);
+	SX127X_delayMicro(6000);
+
+}
+#endif
 
 
 //////////////////////////////////
@@ -71,9 +87,9 @@ void SX127X_SPIWrite(SX127X_t * module, uint8_t addr, uint8_t cmd) {
 void SX127X_SPIBurstRead(SX127X_t * module, uint8_t addr, uint8_t* rxBuf,
 uint8_t length) {
 	uint8_t i;
-	if (length <= 1) {
+	if (length <= 1)
 		return;
-	} else {
+	 else {
 		SX127X_SetNSS(module, 0);
 		SX127X_SPICommand(module, addr);
 		for (i = 0; i < length; i++) {
@@ -86,12 +102,13 @@ uint8_t length) {
 void SX127X_SPIBurstWrite(SX127X_t * module, uint8_t addr, uint8_t* txBuf,
 uint8_t length) {
 	unsigned char i;
-	if (length <= 1) {
+	if (length <= 1)
 		return;
-	} else {
+	else {
 		SX127X_SetNSS(module, 0);
 		SX127X_SPICommand(module, addr | 0x80);
-		for (i = 0; i < length; i++) {
+		for (i = 0; i < length; i++)
+		{
 			SX127X_SPICommand(module, *(txBuf + i));
 		}
 		SX127X_SetNSS(module, 1);
@@ -161,15 +178,15 @@ module->len=3;
 module->power=SX127X_POWER_20DBM;
 module->preamble=5;
 module->sf=SX127X_LORA_SF_12;
-module->spi=&hspi1;
 module->syncWord=0x1;
 module->alwaysRX=1;
 }
 
-void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss)
+void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss, SPI_HandleTypeDef* hspi)
 {
 module->reset = reset;
 module->nss = nss;
+module->spi = hspi;
 }
 
 void SX127X_standby(SX127X_t * module) {
@@ -202,9 +219,9 @@ int SX127X_startRx(SX127X_t * module, uint32_t timeout) {
 	addr = SX127X_SPIRead(module, LR_RegFifoRxBaseAddr); //Read RxBaseAddr
 	SX127X_SPIWrite(module, LR_RegFifoAddrPtr, addr); //RxBaseAddr->FiFoAddrPtr
 	if (module->frequency<SX127X_FREQ_525MHZ)
-	SX127X_SPIWrite(module, LR_RegOpMode, 0x8d);	//Cont RX Mode + LF
+	SX127X_SPIWrite(module, LR_RegOpMode, 0x8d);	//Cont RX Mode & LF
 	else
-	SX127X_SPIWrite(module, LR_RegOpMode,0x85);	    //Cont RX Mode + HF
+	SX127X_SPIWrite(module, LR_RegOpMode,0x85);	    //Cont RX Mode & HF
 	module->readBytes = 0;
 
 	while (1) {
@@ -217,65 +234,7 @@ int SX127X_startRx(SX127X_t * module, uint32_t timeout) {
 			SX127X_config(module);
 			return 0;}
 
-		HAL_Delay(1);}
-}
-
-int SX127X_startTx(SX127X_t * module, uint8_t len, uint32_t timeout) {
-	uint8_t addr;
-	uint8_t temp;
-
-	module->len = len;
-
-	SX127X_config(module); //setting base parameter
-	SX127X_SPIWrite(module, REG_LR_PADAC, 0x87);	//20dBm
-	SX127X_SPIWrite(module, LR_RegHopPeriod, 0x00);
-	SX127X_clearIrq(module);
-	SX127X_SPIWrite(module, LR_RegPayloadLength, len);
-	addr = SX127X_SPIRead(module, LR_RegFifoTxBaseAddr);
-	SX127X_SPIWrite(module, LR_RegFifoAddrPtr, addr);
-	HAL_Delay(5);
-	while (1) {
-		temp = SX127X_SPIRead(module, LR_RegPayloadLength);
-		if (temp == len) {
-			module->status = TX;
-			return 1;
-		}
-
-		if (--timeout == 0) {
-			SX127X_Reset(module);
-			SX127X_config(module);
-			return 0;
-		}
-		HAL_Delay(1);
-	}
-}
-
-
-int SX127X_transmit(SX127X_t * module, uint8_t* txBuffer, uint8_t length,
-uint32_t timeout) {
-	module->status=TX;
-	SX127X_SPIBurstWrite(module, 0x00, txBuffer, length);
-
-	if (module->frequency<SX127X_FREQ_525MHZ)
-	SX127X_SPIWrite(module, LR_RegOpMode, 0x8b);	//Tx Mode LF
-	else
-	SX127X_SPIWrite(module, LR_RegOpMode, 0x83);	//Tx Mode HF
-
-	while (1) {
-		SX127X_readIrq(module);
-		if (module->irq&IRQ_TX_DONE) {
-			SX127X_clearIrq(module);
-			SX127X_standby(module);
-			return true;
-		}
-
-		if (--timeout == 0) {
-			SX127X_Reset(module);
-			SX127X_config(module);
-			return false;
-		}
-		HAL_Delay(1);
-	}
+		SX127X_delayMicro(1000);;}
 }
 
 
@@ -297,7 +256,7 @@ uint8_t SX127X_receive(SX127X_t * module) {
 
 
 
-void SX127X_transmit_it(SX127X_t* module) {
+void SX127X_startTransmission(SX127X_t* module) {
 	uint8_t addr;
 	SX127X_config(module); //setting base parameter
 	module->status=TX;
@@ -318,7 +277,7 @@ void SX127X_transmit_it(SX127X_t* module) {
 
 }
 
-HAL_StatusTypeDef SX127X_requestTransmission(SX127X_t* module,uint8_t lenght)
+HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t* module,uint8_t lenght)
 {
 if (module->TXrequest==0 &&
 	module->status!=TX)
@@ -345,7 +304,7 @@ void SX127X_Routine(SX127X_t* module)
 		SX127X_startRx(module, 100);
 
 	if (module->TXrequest && (module->modemStatus&MODEM_STATUS_SIG_DET)==0)
-		SX127X_transmit_it(module);
+		SX127X_startTransmission(module);
 
 	SX127X_readIrq(module);
 		if (module->irq & IRQ_TX_DONE)
@@ -398,7 +357,7 @@ int8_t SX127X_readTemp(SX127X_t * module)
 	if (ret&0x80)
 	return 255-ret;
 	else
-	return ret*-1;
+	return -ret;
 }
 
 void SX127X_readStatus(SX127X_t * module)
@@ -420,8 +379,8 @@ module->irq = SX127X_SPIRead(module, LR_RegIrqFlags);
 
 void SX127X_delayMicro(uint32_t micros)
 {
-	micros *=SystemCoreClock / 10000000 ;
-	while (micros--);
+	 micros *=(SystemCoreClock / 1000000) / 5;
+     while (micros--);
 }
 
 uint8_t SX127X_getRandom(SX127X_t* module)
@@ -431,8 +390,20 @@ return SX127X_SPIRead(module, LR_RegWideBandRSSI);
 
 void SX127X_init(SX127X_t* module)
 {
+
+HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_RESET);
+SX127X_delayMicro(10000);
 HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_SET);
-HAL_Delay(10);
+SX127X_delayMicro(10000);
 module->revision=SX127X_SPIRead(module, REG_LR_VERSION);
 module->revision=SX127X_SPIRead(module, REG_LR_VERSION);
+}
+
+void SX127X_readAllRegisters(SX127X_t* module,uint8_t* buf)
+{
+	int i=0;
+	for(i=1;i<32;i++)
+	{
+		buf[i]=SX127X_SPIRead(module, i);
+	}
 }
