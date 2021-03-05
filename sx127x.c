@@ -2,8 +2,8 @@
 *Author Milke Andrey  <streamline88@inbox.ru>
 * based on code of Wojciech Domski <Wojciech.Domski@gmail.com>
 */
-#include "main.h"
-
+#include "sx127x.h"
+#include <string.h>
 
 #ifndef USE_LL
 __weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state) {
