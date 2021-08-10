@@ -9,9 +9,9 @@
 #ifndef __SX127X_H__
 #define __SX127X_H__
 
+#include "main.h"
 #include <stdint.h>
 #include <stdbool.h>
-#include "main.h"
 #define SX127X_MAX_PACKET	32
 
 
@@ -155,8 +155,8 @@ typedef struct {
 
 	SX127X_Status_t status;
 	bool TXrequest;  //Запрос отправки сообщения
-	uint32_t lastRX; //Последний приём сообщения
 	uint32_t lastTransTick; //Время последней передачи
+	uint32_t lastSignalTick;
     bool signalDetected;
 	uint8_t rxBuf[32]; //Буфер в который будет перемещено входящее сообщение
 	uint8_t txBuf[32]; //Буфер из которого будет отправлено сообщение

@@ -386,7 +386,7 @@ void SX127X_readStatus(SX127X_t *module)
 	if (module->modemStatus & MODEM_STATUS_SIG_DET)
 	{
 		module->signalDetected = true;
-		module->lastRX = HAL_GetTick();
+		module->lastSignalTick = HAL_GetTick();
 	}
 	else
 		module->signalDetected = false;
