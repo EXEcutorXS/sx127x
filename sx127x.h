@@ -172,6 +172,8 @@ typedef struct {
 	SPI_HandleTypeDef* spi;
 
 	uint8_t revision;
+	uint32_t watchdogTick;
+	uint16_t wdCounter;
 } SX127X_t;
 
 __weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state);

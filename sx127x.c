@@ -7,7 +7,7 @@
 #ifndef USE_LL
 __weak void SX127X_SetNSS(SX127X_t *module, GPIO_PinState state)
 {
-            	HAL_GPIO_WritePin(module->nss.port, module->nss.pin, state);
+	HAL_GPIO_WritePin(module->nss.port, module->nss.pin, state);
 }
 
 __weak void SX127X_Reset(SX127X_t *module)
@@ -310,11 +310,15 @@ HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t *module, uint8_t lenght)
 
 void SX127X_Routine(SX127X_t *module)
 {
+
 	SX127X_readStatus(module);
 	SX127X_readIrq(module);
 
 	if (module->status == UNINITIALISED)
+	{
+		SX127X_Reset(module);
 		SX127X_config(module);
+	}
 
 	if ((module->status == SLEEP || module->status == STANDBY)
 			&& module->alwaysRX)
@@ -337,6 +341,13 @@ void SX127X_Routine(SX127X_t *module)
 		SX127X_clearIrq(module);
 	}
 
+	if (((SX127X_SPIRead(module, 0x1D)) != (module->bw << 4 | module->cr << 1 | module->implicitHeader))
+			|| (HAL_GetTick() - module->watchdogTick > 120000)) //Watchdog
+	{
+		module->wdCounter++;
+		module->watchdogTick = HAL_GetTick();
+		module->status = UNINITIALISED;
+	}
 }
 
 int16_t SX127X_RSSI(SX127X_t *module)
@@ -387,6 +398,7 @@ void SX127X_readStatus(SX127X_t *module)
 	{
 		module->signalDetected = true;
 		module->lastSignalTick = HAL_GetTick();
+		module->watchdogTick = HAL_GetTick();
 	}
 	else
 		module->signalDetected = false;
