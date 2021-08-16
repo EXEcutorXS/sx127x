@@ -423,11 +423,7 @@ uint8_t SX127X_getRandom(SX127X_t *module)
 
 void SX127X_init(SX127X_t *module)
 {
-
-	HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_RESET);
-	HAL_Delay(15);
-	HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_SET);
-	HAL_Delay(15);
+	SX127X_Reset(module);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
 }
