@@ -164,6 +164,7 @@ typedef struct {
 	uint8_t irq;
 	uint8_t modemStatus;
 	bool badCrc;
+	bool connected;
 
 	//Hardware part
 

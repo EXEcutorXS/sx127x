@@ -423,9 +423,13 @@ uint8_t SX127X_getRandom(SX127X_t *module)
 
 void SX127X_init(SX127X_t *module)
 {
+	uint8_t buf[32];
 	SX127X_Reset(module);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
+	SX127X_readAllRegisters(module, buf);
+	if (buf[1]==9 && buf[2]==26)
+		module->connected=true;
 }
 
 void SX127X_readAllRegisters(SX127X_t *module, uint8_t *buf)
