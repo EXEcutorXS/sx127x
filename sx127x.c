@@ -5,13 +5,11 @@
 #include "main.h"
 
 #ifndef USE_LL
-__weak void SX127X_SetNSS(SX127X_t *module, GPIO_PinState state)
-{
+__weak void SX127X_SetNSS(SX127X_t *module, GPIO_PinState state) {
 	HAL_GPIO_WritePin(module->nss.port, module->nss.pin, state);
 }
 
-__weak void SX127X_Reset(SX127X_t *module)
-{
+__weak void SX127X_Reset(SX127X_t *module) {
 	SX127X_SetNSS(module, 1);
 	HAL_GPIO_WritePin(module->reset.port, module->reset.pin, GPIO_PIN_RESET);
 
@@ -22,16 +20,14 @@ __weak void SX127X_Reset(SX127X_t *module)
 	SX127X_delayMicro(6000);
 }
 
-__weak void SX127X_SPICommand(SX127X_t *module, uint8_t cmd)
-{
+__weak void SX127X_SPICommand(SX127X_t *module, uint8_t cmd) {
 	SX127X_SetNSS(module, 0);
 	HAL_SPI_Transmit(module->spi, &cmd, 1, 1000);
 	while (HAL_SPI_GetState(module->spi) != HAL_SPI_STATE_READY)
 		;
 }
 
-__weak uint8_t SX127X_SPIReadByte(SX127X_t *module)
-{
+__weak uint8_t SX127X_SPIReadByte(SX127X_t *module) {
 	uint8_t txByte = 0x00;
 	uint8_t rxByte = 0x00;
 
@@ -72,8 +68,7 @@ __weak void SX127X_Reset(SX127X_t * module) {
 // logic
 //////////////////////////////////
 
-uint8_t SX127X_SPIRead(SX127X_t *module, uint8_t addr)
-{
+uint8_t SX127X_SPIRead(SX127X_t *module, uint8_t addr) {
 	uint8_t tmp;
 	SX127X_SPICommand(module, addr);
 	tmp = SX127X_SPIReadByte(module);
@@ -81,8 +76,7 @@ uint8_t SX127X_SPIRead(SX127X_t *module, uint8_t addr)
 	return tmp;
 }
 
-void SX127X_SPIWrite(SX127X_t *module, uint8_t addr, uint8_t cmd)
-{
+void SX127X_SPIWrite(SX127X_t *module, uint8_t addr, uint8_t cmd) {
 	SX127X_SetNSS(module, 0);
 	SX127X_SPICommand(module, addr | 0x80);
 	SX127X_SPICommand(module, cmd);
@@ -90,17 +84,14 @@ void SX127X_SPIWrite(SX127X_t *module, uint8_t addr, uint8_t cmd)
 }
 
 void SX127X_SPIBurstRead(SX127X_t *module, uint8_t addr, uint8_t *rxBuf,
-		uint8_t length)
-{
+		uint8_t length) {
 	uint8_t i;
 	if (length <= 1)
 		return;
-	else
-	{
+	else {
 		SX127X_SetNSS(module, 0);
 		SX127X_SPICommand(module, addr);
-		for (i = 0; i < length; i++)
-		{
+		for (i = 0; i < length; i++) {
 			*(rxBuf + i) = SX127X_SPIReadByte(module);
 		}
 		SX127X_SetNSS(module, 1);
@@ -108,25 +99,21 @@ void SX127X_SPIBurstRead(SX127X_t *module, uint8_t addr, uint8_t *rxBuf,
 }
 
 void SX127X_SPIBurstWrite(SX127X_t *module, uint8_t addr, uint8_t *txBuf,
-		uint8_t length)
-{
+		uint8_t length) {
 	unsigned char i;
 	if (length <= 1)
 		return;
-	else
-	{
+	else {
 		SX127X_SetNSS(module, 0);
 		SX127X_SPICommand(module, addr | 0x80);
-		for (i = 0; i < length; i++)
-		{
+		for (i = 0; i < length; i++) {
 			SX127X_SPICommand(module, *(txBuf + i));
 		}
 		SX127X_SetNSS(module, 1);
 	}
 }
 
-void SX127X_config(SX127X_t *module)
-{
+void SX127X_config(SX127X_t *module) {
 	SX127X_sleep(module); //Change modem mode Must in Sleep mode
 
 	SX127X_SPIWrite(module, LR_RegFrMsb, (module->frequency >> 16) & 0xFF);
@@ -154,18 +141,15 @@ void SX127X_config(SX127X_t *module)
 
 	/*** Sensitivity correction for 500kHz BW (see Errata) ***/
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
-	if (module->bw == SX127X_LORA_BW_500KHZ && module->revision == 0x12)
-	{
+	if (module->bw == SX127X_LORA_BW_500KHZ && module->revision == 0x12) {
 		if (module->frequency > SX127X_FREQ_820MHZ
-				&& module->frequency < SX127X_FREQ_1020MHZ)
-		{
+				&& module->frequency < SX127X_FREQ_1020MHZ) {
 			SX127X_SPIWrite(module, 0x36, 0x2);
 			SX127X_SPIWrite(module, 0x3A, 0x64);
 
 		}
 		if (module->frequency > SX127X_FREQ_410MHZ
-				&& module->frequency < SX127X_FREQ_525MHZ)
-		{
+				&& module->frequency < SX127X_FREQ_525MHZ) {
 			SX127X_SPIWrite(module, 0x36, 0x3);
 			SX127X_SPIWrite(module, 0x3A, 0x7F);
 
@@ -175,8 +159,7 @@ void SX127X_config(SX127X_t *module)
 	SX127X_standby(module); //Entry standby mode
 }
 
-void SX127X_defaultConfig(SX127X_t *module)
-{
+void SX127X_defaultConfig(SX127X_t *module) {
 	module->bw = SX127X_LORA_BW_125KHZ;
 	module->cr = SX127X_CR_4_8;
 	module->crcEnable = 1;
@@ -191,15 +174,13 @@ void SX127X_defaultConfig(SX127X_t *module)
 }
 
 void SX127X_PortConfig(SX127X_t *module, SX127X_dio_t reset, SX127X_dio_t nss,
-		SPI_HandleTypeDef *hspi)
-{
+		SPI_HandleTypeDef *hspi) {
 	module->reset = reset;
 	module->nss = nss;
 	module->spi = hspi;
 }
 
-void SX127X_standby(SX127X_t *module)
-{
+void SX127X_standby(SX127X_t *module) {
 	if (module->frequency < SX127X_FREQ_525MHZ)
 		SX127X_SPIWrite(module, LR_RegOpMode, 0x89);
 	else
@@ -207,8 +188,7 @@ void SX127X_standby(SX127X_t *module)
 	module->status = STANDBY;
 }
 
-void SX127X_sleep(SX127X_t *module)
-{
+void SX127X_sleep(SX127X_t *module) {
 	if (module->frequency < SX127X_FREQ_525MHZ)
 		SX127X_SPIWrite(module, LR_RegOpMode, 0x88);
 	else
@@ -216,13 +196,11 @@ void SX127X_sleep(SX127X_t *module)
 	module->status = SLEEP;
 }
 
-void SX127X_clearIrq(SX127X_t *module)
-{
+void SX127X_clearIrq(SX127X_t *module) {
 	SX127X_SPIWrite(module, LR_RegIrqFlags, 0xFF);
 }
 
-int SX127X_startRx(SX127X_t *module, uint32_t timeout)
-{
+int SX127X_startRx(SX127X_t *module, uint32_t timeout) {
 	uint8_t addr;
 	SX127X_config(module);		//Setting base parameter
 	SX127X_SPIWrite(module, REG_LR_PADAC, 0x84);	//Normal and RX
@@ -237,17 +215,14 @@ int SX127X_startRx(SX127X_t *module, uint32_t timeout)
 		SX127X_SPIWrite(module, LR_RegOpMode, 0x85);	    //Cont RX Mode & HF
 	module->readBytes = 0;
 
-	while (1)
-	{
+	while (1) {
 		uint8_t status = SX127X_SPIRead(module, LR_RegModemStat);
-		if (status & 0x04)
-		{	//Rx-on going RegModemStat
+		if (status & 0x04) {	//Rx-on going RegModemStat
 			module->status = RX;
 			return 1;
 		}
 
-		if (--timeout == 0)
-		{
+		if (--timeout == 0) {
 			SX127X_Reset(module);
 			SX127X_config(module);
 			return 0;
@@ -257,8 +232,7 @@ int SX127X_startRx(SX127X_t *module, uint32_t timeout)
 	}
 }
 
-uint8_t SX127X_receive(SX127X_t *module)
-{
+uint8_t SX127X_receive(SX127X_t *module) {
 	unsigned char addr;
 	unsigned char packet_size;
 	memset(module->rxBuf, 0x00, SX127X_MAX_PACKET);
@@ -274,8 +248,7 @@ uint8_t SX127X_receive(SX127X_t *module)
 	return module->readBytes;
 }
 
-void SX127X_startTransmission(SX127X_t *module)
-{
+void SX127X_startTransmission(SX127X_t *module) {
 	uint8_t addr;
 	SX127X_config(module); //setting base parameter
 	module->status = TX;
@@ -295,27 +268,23 @@ void SX127X_startTransmission(SX127X_t *module)
 
 }
 
-HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t *module, uint8_t lenght)
-{
-	if (module->TXrequest == 0 && module->status != TX)
-	{
+HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t *module, uint8_t lenght) {
+	if (module->TXrequest == 0 && module->status != TX) {
 		module->len = lenght;
 		module->TXrequest = 1;
 
 		return HAL_OK;
-	}
-	else
+	} else
 		return HAL_ERROR;
 }
 
-void SX127X_Routine(SX127X_t *module)
-{
+
+void SX127X_Handler(SX127X_t *module) {
 
 	SX127X_readStatus(module);
 	SX127X_readIrq(module);
 
-	if (module->status == UNINITIALISED)
-	{
+	if (module->status == UNINITIALISED) {
 		SX127X_Reset(module);
 		SX127X_config(module);
 	}
@@ -328,51 +297,47 @@ void SX127X_Routine(SX127X_t *module)
 		SX127X_startTransmission(module);
 
 	SX127X_readIrq(module);
-	if (module->irq & IRQ_TX_DONE)
-	{
+
+	if (module->irq & IRQ_TX_DONE) {
 		SX127X_clearIrq(module);
 		SX127X_startRx(module, 100);
 	}
 
-	if (module->irq & IRQ_RX_DONE)
-	{
+	if (module->irq & IRQ_RX_DONE) {
 		module->badCrc = (module->irq & IRQ_CRC_ERROR) >> 5;
 		SX127X_receive(module);
 		SX127X_clearIrq(module);
 	}
 
-	if (((SX127X_SPIRead(module, 0x1D)) != (module->bw << 4 | module->cr << 1 | module->implicitHeader))
+	if (((SX127X_SPIRead(module, 0x1D))
+			!= (module->bw << 4 | module->cr << 1 | module->implicitHeader))
 			|| (HAL_GetTick() - module->watchdogTick > 120000)) //Watchdog
-	{
+			{
 		module->wdCounter++;
 		module->watchdogTick = HAL_GetTick();
 		module->status = UNINITIALISED;
 	}
 }
 
-int16_t SX127X_RSSI(SX127X_t *module)
-{
+int16_t SX127X_RSSI(SX127X_t *module) {
 	if (module->frequency < SX127X_FREQ_525MHZ)
 		return (int16_t) SX127X_SPIRead(module, LR_RegRssiValue) - 164;
 	else
 		return (int16_t) SX127X_SPIRead(module, LR_RegRssiValue) - 157;
 }
 
-int16_t SX127X_RSSI_Pack(SX127X_t *module)
-{
+int16_t SX127X_RSSI_Pack(SX127X_t *module) {
 	if (module->frequency < SX127X_FREQ_525MHZ)
 		return (int16_t) SX127X_SPIRead(module, LR_RegPktRssiValue) - 164;
 	else
 		return (int16_t) SX127X_SPIRead(module, LR_RegPktRssiValue) - 157;
 }
 
-uint8_t SX127X_SNR(SX127X_t *module)
-{
+uint8_t SX127X_SNR(SX127X_t *module) {
 	return SX127X_SPIRead(module, LR_RegPktSnrValue) / 4;
 }
 
-int8_t SX127X_readTemp(SX127X_t *module)
-{
+int8_t SX127X_readTemp(SX127X_t *module) {
 	int8_t temp;
 	uint8_t ret;
 	SX127X_sleep(module);
@@ -391,52 +356,43 @@ int8_t SX127X_readTemp(SX127X_t *module)
 		return -ret;
 }
 
-void SX127X_readStatus(SX127X_t *module)
-{
+void SX127X_readStatus(SX127X_t *module) {
 	module->modemStatus = SX127X_SPIRead(module, LR_RegModemStat);
-	if (module->modemStatus & MODEM_STATUS_SIG_DET)
-	{
+	if (module->modemStatus & MODEM_STATUS_SIG_DET) {
 		module->signalDetected = true;
 		module->lastSignalTick = HAL_GetTick();
 		module->watchdogTick = HAL_GetTick();
-	}
-	else
+	} else
 		module->signalDetected = false;
 }
 
-void SX127X_readIrq(SX127X_t *module)
-{
+void SX127X_readIrq(SX127X_t *module) {
 	module->irq = SX127X_SPIRead(module, LR_RegIrqFlags);
 }
 
-void SX127X_delayMicro(uint32_t micros)
-{
+void SX127X_delayMicro(uint32_t micros) {
 	micros *= (SystemCoreClock / 1000000) / 5;
 	while (micros--)
 		;
 }
 
-uint8_t SX127X_getRandom(SX127X_t *module)
-{
+uint8_t SX127X_getRandom(SX127X_t *module) {
 	return SX127X_SPIRead(module, LR_RegWideBandRSSI);
 }
 
-void SX127X_init(SX127X_t *module)
-{
+void SX127X_init(SX127X_t *module) {
 	uint8_t buf[32];
 	SX127X_Reset(module);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
 	module->revision = SX127X_SPIRead(module, REG_LR_VERSION);
 	SX127X_readAllRegisters(module, buf);
-	if (buf[1]==9 && buf[2]==26)
-		module->connected=true;
+	if (buf[1] == 9 && buf[2] == 26)
+		module->connected = true;
 }
 
-void SX127X_readAllRegisters(SX127X_t *module, uint8_t *buf)
-{
+void SX127X_readAllRegisters(SX127X_t *module, uint8_t *buf) {
 	int i = 0;
-	for (i = 1; i < 32; i++)
-	{
+	for (i = 1; i < 32; i++) {
 		buf[i] = SX127X_SPIRead(module, i);
 	}
 }

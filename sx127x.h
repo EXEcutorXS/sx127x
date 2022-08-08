@@ -175,6 +175,7 @@ typedef struct {
 	uint8_t revision;
 	uint32_t watchdogTick;
 	uint16_t wdCounter;
+
 } SX127X_t;
 
 __weak void SX127X_SetNSS(SX127X_t * module, GPIO_PinState state);
@@ -207,7 +208,7 @@ int16_t SX127X_RSSI_Pack(SX127X_t * module);
 uint8_t SX127X_SNR(SX127X_t * module);
 int8_t SX127X_readTemp(SX127X_t * module);
 void SX127X_readAllRegisters(SX127X_t* module,uint8_t* buf);
-void SX127X_Routine(SX127X_t* module);
+void SX127X_Handler(SX127X_t* module);
 void SX127X_transmit_it(SX127X_t* module);
 void SX127X_PortConfig(SX127X_t * module, SX127X_dio_t reset, SX127X_dio_t nss, SPI_HandleTypeDef* hspi);
 HAL_StatusTypeDef SX127X_transmitAsync(SX127X_t* module, uint8_t lenght);
